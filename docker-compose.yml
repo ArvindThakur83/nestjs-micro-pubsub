@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  receiver:
+    build: ./receiver-service
+    container_name: receiver-service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/receiver_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=3000
+
+  listener:
+    build: ./listener-service
+    container_name: listener-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/listener_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=3001
+
+volumes:
+  mongo_data:
